@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>支付成功 - 订单查询</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Microsoft YaHei";
+    }
+    body {
+      background: #f5f5f5;
+      padding: 30px 15px;
+    }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    /* 支付成功头部 */
+    .pay-success-header {
+      text-align: center;
+      padding: 40px 20px;
+      background: #07c160;
+      color: #fff;
+    }
+    .icon-success {
+      font-size: 50px;
+      margin-bottom: 10px;
+    }
+    /* 订单信息卡片 */
+    .order-info {
+      padding: 20px;
+    }
+    .title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #333;
+      border-left: 4px solid #07c160;
+      padding-left: 10px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      line-height: 2.2;
+      font-size: 15px;
+      color: #666;
+    }
+    .info-row span:first-child {
+      color: #999;
+    }
+    .price-text {
+      color: #f56c6c;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    /* 查询区域 */
+    .search-box {
+      margin: 20px;
+      padding: 20px;
+      border: 1px dashed #ccc;
+      border-radius: 8px;
+    }
+    .search-box input {
+      width: 70%;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .search-box button {
+      width: 26%;
+      height: 40px;
+      background: #07c160;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    /* 订单列表 */
+    .order-list {
+      padding: 0 20px 20px;
+    }
+    .order-item {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 12px;
+    }
+    .order-item .order-no {
+      color: #07c160;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    /* 底部按钮 */
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      padding: 20px;
+    }
+    .btn {
+      flex: 1;
+      height: 44px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .btn-detail {
+      border: 1px solid #07c160;
+      background: #fff;
+      color: #07c160;
+    }
+    .btn-home {
+      background: #07c160;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <!-- 支付成功提示 -->
+  <div class="pay-success-header">
+    <div class="icon-success">✓</div>
+    <h2>支付成功</h2>
+    <p>您的订单已完成付款，可查询全部订单</p>
+  </div>
+
+  <!-- 当前支付订单基础信息（URL携带订单号自动回显） -->
+  <div class="order-info" id="currentOrderWrap">
+    <div class="title">本次支付订单</div>
+    <div class="info-row">
+      <span>订单编号</span>
+      <span id="currentOrderNo"></span>
+    </div>
+    <div class="info-row">
+      <span>支付金额</span>
+      <span class="price-text" id="payAmount"></span>
+    </div>
+    <div class="info-row">
+      <span>支付时间</span>
+      <span id="payTime"></span>
+    </div>
+    <div class="info-row">
+      <span>订单状态</span>
+      <span style="color:#07c160">已支付</span>
+    </div>
+  </div>
+
+  <!-- 订单查询模块 -->
+  <div class="search-box">
+    <input type="text" id="queryOrderNo" placeholder="输入订单号查询其他订单">
+    <button onclick="searchOrder()">查询订单</button>
+  </div>
+
+  <!-- 查询结果展示区域 -->
+  <div class="order-list" id="resultWrap"></div>
+
+  <!-- 底部操作按钮 -->
+  <div class="btn-group">
+    <button class="btn btn-detail" id="goDetailBtn" onclick="toOrderDetail()">查看订单详情</button>
+    <button class="btn btn-home" onclick="backIndex()">返回商城首页</button>
+  </div>
+</div>
+
+<script>
+  // 获取URL参数（支付跳转时携带 orderNo、amount、time）
+  function getUrlParam(name) {
+    let search = window.location.search.slice(1);
+    let arr = search.split('&');
+    for (let i = 0; i < arr.length; i++) {
+      let kv = arr[i].split('=');
+      if (kv[0] === name) return decodeURIComponent(kv[1]);
+    }
+    return '';
+  }
+
+  // 页面初始化：渲染本次支付订单
+  let globalOrderNo = getUrlParam('orderNo');
+  let payAmount = getUrlParam('amount');
+  let payTime = getUrlParam('time');
+
+  window.onload = function () {
+    if (globalOrderNo) {
+      document.getElementById('currentOrderNo').innerText = globalOrderNo;
+      document.getElementById('payAmount').innerText = '¥' + payAmount;
+      document.getElementById('payTime').innerText = payTime;
+      document.getElementById('queryOrderNo').value = globalOrderNo;
+    } else {
+      document.getElementById('currentOrderWrap').style.display = 'none';
+    }
+  }
+
+  // 查询订单接口
+  function searchOrder() {
+    let orderNo = document.getElementById('queryOrderNo').value.trim();
+    let resultWrap = document.getElementById('resultWrap');
+    if (!orderNo) {
+      resultWrap.innerHTML = '<p style="color:#f56c6c;text-align:center;">请输入订单编号</p>';
+      return;
+    }
+    // 请求后端订单查询接口
+    fetch(`/api/order/query?order_no=${orderNo}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.code !== 200 || res.data.list.length === 0) {
+          resultWrap.innerHTML = '<p style="color:#999;text-align:center;">未查询到该订单</p>';
+          return;
+        }
+        let item = res.data.list[0];
+        let statusText = '';
+        switch (item.order_status) {
+          case 0: statusText = '待付款'; break;
+          case 1: statusText = '已支付'; break;
+          case 2: statusText = '已发货'; break;
+          case 3: statusText = '已完成'; break;
+          case 4: statusText = '已取消'; break;
+        }
+        // 渲染查询结果
+        resultWrap.innerHTML = `
+          <div class="title">查询结果</div>
+          <div class="order-item">
+            <div class="order-no">订单号：${item.order_no}</div>
+            <div class="info-row">
+              <span>订单金额</span><span>¥${item.total_amount}</span>
+            </div>
+            <div class="info-row">
+              <span>订单状态</span><span>${statusText}</span>
+            </div>
+            <div class="info-row">
+              <span>创建时间</span><span>${item.create_time}</span>
+            </div>
+          </div>
+        `;
+        // 更新全局订单号，点击详情跳转使用
+        globalOrderNo = item.order_no;
+      })
+      .catch(err => {
+        resultWrap.innerHTML = '<p style="color:#f56c6c;text-align:center;">查询接口异常</p>';
+      })
+  }
+
+  // 跳转订单详情
+  function toOrderDetail() {
+    if (!globalOrderNo) {
+      alert('请先查询订单');
+      return;
+    }
+    window.location.href = `orderDetail.html?orderNo=${globalOrderNo}`;
+  }
+
+  // 返回首页
+  function backIndex() {
+    window.location.href = 'index.html';
+  }
+</script>
+</body>
+</html>
